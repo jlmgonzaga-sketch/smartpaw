@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f4f1">
+  <meta name="description" content="SmartPaw — Smart IoT Pet Feeder with AI recognition">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="SmartPaw">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./css/style.css">
+  <title>SmartPaw</title>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="logo">
+      <div class="logo-mark">
+        <!-- Paw SVG -->
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="15.5" rx="4" ry="3.5"/>
+          <circle cx="7.5" cy="8" r="1.8"/>
+          <circle cx="12" cy="6" r="1.8"/>
+          <circle cx="16.5" cy="8" r="1.8"/>
+        </svg>
+      </div>
+      <span>Smart<span>Paw</span></span>
+    </div>
+    <div class="topbar-r">
+      <span class="chip blue" id="tb-page">Dashboard</span>
+      <span class="chip green" id="tb-pet-count">0 pets</span>
+    </div>
+  </header>
+
+  <!-- Toasts -->
+  <div class="toast-wrap" id="toast-wrap"></div>
+
+  <!-- Content -->
+  <main class="content">
+
+    <!-- ══════════════ DASHBOARD ══════════════ -->
+    <div id="page-dash" class="tab-page active">
+
+      <!-- Install banner -->
+      <div id="install-banner" class="install-banner hidden">
+        <div style="color:var(--ac);" id="install-ico"></div>
+        <div class="install-banner-text">
+          <div class="install-banner-title">Install SmartPaw</div>
+          <div class="install-banner-sub">Add to home screen for the full experience</div>
+        </div>
+        <div class="install-banner-arr" id="install-arr"></div>
+      </div>
+
+      <!-- Greeting -->
+      <div class="greeting">
+        <div class="greeting-eyebrow">SmartPaw IoT Feeder</div>
+        <div class="greeting-title" id="greeting-text">Good morning</div>
+        <div class="greeting-sub" id="greeting-sub">Register your first pet to get started.</div>
+      </div>
+
+      <!-- Summary -->
+      <div class="summary-strip">
+        <div class="summary-card">
+          <div class="summary-ico" style="background:var(--ac-bg);color:var(--ac);" id="ico-pets"></div>
+          <div class="summary-label">Registered</div>
+          <div class="summary-val" id="sum-pets">0</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-ico" style="background:var(--gr-bg);color:var(--gr);" id="ico-feeds"></div>
+          <div class="summary-label">All-time</div>
+          <div class="summary-val" id="sum-feedings">0</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-ico" style="background:var(--wa-bg);color:var(--wa);" id="ico-today"></div>
+          <div class="summary-label">Today</div>
+          <div class="summary-val" id="sum-today">0</div>
+        </div>
+      </div>
+
+      <!-- Section header -->
+      <div class="sec-head">
+        <span class="sec-title">Registered Pets</span>
+        <span class="sec-count" id="pet-count-label"></span>
+      </div>
+
+      <!-- Add pet -->
+      <button class="add-btn" onclick="openAddPet()" id="add-pet-btn">
+        <span id="add-icon"></span> Register New Pet
+      </button>
+
+      <!-- Pet list -->
+      <div id="pet-list"></div>
+    </div>
+
+    <!-- ══════════════ LOG ══════════════ -->
+    <div id="page-log" class="tab-page">
+      <div class="page-header">
+        <div class="page-title">Activity Log</div>
+        <div class="page-sub">Feeding and watering history</div>
+      </div>
+
+      <div class="stats-hero">
+        <div class="stats-hero-label">Today's Calories</div>
+        <div class="stats-hero-val"><span id="log-kcal">0</span> <span class="stats-hero-unit">kcal</span></div>
+        <div class="stats-hero-sub" id="log-today-sub">0 feedings today</div>
+      </div>
+
+      <div class="stats-quad">
+        <div class="stat-block">
+          <div class="stat-block-label">Total Feeds</div>
+          <div class="stat-block-val" id="log-total-feed">0</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-block-label">Water Events</div>
+          <div class="stat-block-val" id="log-total-water">0</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-block-label">Today Feeds</div>
+          <div class="stat-block-val" id="log-today-count">0</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-block-label">Total kcal</div>
+          <div class="stat-block-val" id="log-all-kcal">0</div>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <button class="filter-pill on" data-filter="all">All</button>
+        <button class="filter-pill" data-filter="food">Food</button>
+        <button class="filter-pill" data-filter="water">Water</button>
+      </div>
+
+      <div class="log-section" id="log-list"></div>
+    </div>
+
+    <!-- ══════════════ SCAN ══════════════ -->
+    <div id="page-scan" class="tab-page">
+      <div class="page-header">
+        <div class="page-title">Pet Scanner</div>
+        <div class="page-sub">AI identification via TensorFlow MobileNet</div>
+      </div>
+
+      <div class="scan-wrap">
+        <div class="scan-frame">
+          <video id="scan-video" playsinline muted autoplay style="display:none;"></video>
+          <img  id="scan-preview" class="scan-preview" alt="" style="display:none;">
+          <canvas id="scan-canvas" style="display:none;"></canvas>
+          <div id="scan-icon-wrap" class="scan-icon-wrap" style="color:var(--b3);"></div>
+          <div class="scan-corner tl"></div>
+          <div class="scan-corner tr"></div>
+          <div class="scan-corner bl"></div>
+          <div class="scan-corner br"></div>
+          <div class="scan-line" id="scan-line" style="display:none;"></div>
+        </div>
+        <div class="scan-status" id="scan-status">Camera off</div>
+      </div>
+
+      <div class="scan-result hidden" id="scan-result-box">
+        <div class="scan-result-label">Detection result</div>
+        <div class="scan-result-val" id="scan-result-val">—</div>
+        <div class="scan-result-match" id="scan-result-match"></div>
+      </div>
+
+      <div class="cam-controls">
+        <button class="cam-btn primary" id="scan-btn-start" onclick="scanStart()">
+          <span id="scan-start-ico"></span> Start Camera
+        </button>
+        <button class="cam-btn primary hidden" id="scan-btn-scan" onclick="scanNow()">
+          <span id="scan-scan-ico"></span> Scan Now
+        </button>
+        <button class="cam-btn hidden" id="scan-btn-again" onclick="resetScanUI();scanStart();">
+          <span id="scan-again-ico"></span> Scan Again
+        </button>
+        <button class="cam-btn hidden" id="scan-btn-stop" onclick="resetScanUI()">
+          <span id="scan-stop-ico"></span> Stop
+        </button>
+      </div>
+
+      <div class="info-box mt-12">
+        <div class="info-box-title">How It Works</div>
+        <div class="info-box-body">Point your camera at a pet and press Scan. TensorFlow.js MobileNet analyzes the image and identifies dogs, cats, or fish — then matches to registered profiles automatically.</div>
+      </div>
+    </div>
+
+    <!-- ══════════════ SCHEDULE ══════════════ -->
+    <div id="page-sched" class="tab-page">
+      <div class="page-header">
+        <div class="page-title">Auto Schedule</div>
+        <div class="page-sub">Automated dispensing times</div>
+      </div>
+
+      <button class="add-btn hidden" id="sched-add-btn" onclick="openAddSched()">
+        <span id="sched-add-ico"></span> Add Schedule
+      </button>
+
+      <div id="sched-list"></div>
+    </div>
+
+    <!-- ══════════════ CONFIG ══════════════ -->
+    <div id="page-config" class="tab-page">
+      <div class="page-header">
+        <div class="page-title">Configuration</div>
+        <div class="page-sub">Device and account settings</div>
+      </div>
+
+      <div class="settings-block">
+        <div class="settings-group-title">Adafruit IO Connection</div>
+        <div class="field">
+          <label class="field-label">Username</label>
+          <input id="cfg-user" type="text" placeholder="your-aio-username" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label class="field-label">API Key</label>
+          <input id="cfg-key" type="password" placeholder="Your Adafruit IO key" autocomplete="off">
+        </div>
+        <button class="btn-submit" onclick="saveConfig()">Save Settings</button>
+        <button class="btn-cancel mt-8" id="cfg-test-btn" onclick="testConnection()">Test Connection</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="settings-block">
+        <div class="settings-group-title">Notifications</div>
+        <button class="btn-cancel" onclick="enableNotifications()">Enable Push Notifications</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="settings-block">
+        <div class="settings-group-title">System Information</div>
+        <div class="settings-row"><span class="settings-row-l">Version</span><span class="settings-row-r">2.0.0</span></div>
+        <div class="settings-row"><span class="settings-row-l">ML Model</span><span class="settings-row-r">MobileNet v2</span></div>
+        <div class="settings-row"><span class="settings-row-l">Protocol</span><span class="settings-row-r">Adafruit IO REST</span></div>
+        <div class="settings-row"><span class="settings-row-l">Storage</span><span class="settings-row-r">Local Storage</span></div>
+        <div class="settings-row"><span class="settings-row-l">PWA</span><span class="settings-row-r">Enabled</span></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="settings-block">
+        <div class="settings-group-title">Data Management</div>
+        <button class="btn-cancel" style="color:var(--er);border-color:var(--er-br);"
+          onclick="if(confirm('This will erase all pets and logs. Continue?')){localStorage.clear();location.reload();}">
+          Clear All Data
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Tab Bar -->
+  <nav class="tabbar">
+    <button class="tab-btn active" data-tab="dash" onclick="switchTab('dash')">
+      <div class="tab-indicator"></div>
+      <span class="tab-icon" id="tb-ico-dash"></span>
+      <span class="tab-label">Home</span>
+    </button>
+    <button class="tab-btn" data-tab="log" onclick="switchTab('log')">
+      <div class="tab-indicator"></div>
+      <span class="tab-icon" id="tb-ico-log"></span>
+      <span class="tab-label">Log</span>
+    </button>
+    <button class="tab-btn" data-tab="scan" onclick="switchTab('scan')">
+      <div class="tab-indicator"></div>
+      <span class="tab-icon" id="tb-ico-scan"></span>
+      <span class="tab-label">Scan</span>
+    </button>
+    <button class="tab-btn" data-tab="sched" onclick="switchTab('sched')">
+      <div class="tab-indicator"></div>
+      <span class="tab-icon" id="tb-ico-sched"></span>
+      <span class="tab-label">Schedule</span>
+    </button>
+    <button class="tab-btn" data-tab="config" onclick="switchTab('config')">
+      <div class="tab-indicator"></div>
+      <span class="tab-icon" id="tb-ico-config"></span>
+      <span class="tab-label">Config</span>
+    </button>
+  </nav>
+</div>
+
+
+<!-- ══════════════════════ MODALS ══════════════════════ -->
+
+<!-- Add Pet Modal -->
+<div class="backdrop" id="modal-add">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Register New Pet</div>
+
+    <div class="cam-box" id="reg-cam-box" onclick="if(!regCam.stream&&!regCam.captured)regStartCamera()">
+      <video id="reg-video" playsinline muted autoplay style="display:none;"></video>
+      <img  id="reg-preview" alt="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+      <canvas id="reg-canvas" style="display:none;"></canvas>
+      <div id="reg-cam-hint" style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <div style="color:var(--mu2);" id="reg-cam-icon"></div>
+        <span class="cam-hint">Tap to open camera</span>
+      </div>
+      <div id="reg-overlay" class="cam-overlay hidden"></div>
+    </div>
+
+    <div class="cam-controls">
+      <button class="cam-btn primary" id="reg-btn-start" onclick="regStartCamera()">
+        <span id="reg-ico-cam"></span> Camera
+      </button>
+      <button class="cam-btn primary hidden" id="reg-btn-capture" onclick="regCapture()">
+        <span id="reg-ico-play"></span> Capture
+      </button>
+      <button class="cam-btn hidden" id="reg-btn-retake" onclick="regRetake()">
+        <span id="reg-ico-retake"></span> Retake
+      </button>
+      <label class="cam-btn" style="cursor:pointer;">
+        <span id="reg-ico-upload"></span> Upload
+        <input type="file" accept="image/*" style="display:none;" onchange="regFromFile(this)">
+      </label>
+      <button class="cam-btn hidden" id="reg-btn-stop" onclick="regCam.stop();resetRegButtons();">
+        <span id="reg-ico-stop"></span>
+      </button>
+    </div>
+
+    <div class="detected-badge hidden" id="reg-detected">
+      <span id="reg-det-ico"></span>
+      <span id="reg-detected-text">Detected: Dog</span>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Pet Name</label>
+      <input id="reg-name" type="text" placeholder="e.g. Mochi, Buddy, Nemo" maxlength="32">
+    </div>
+
+    <div class="field">
+      <label class="field-label">Pet Type</label>
+      <input id="reg-type-val" type="hidden" value="">
+      <div class="type-grid">
+        <div class="type-opt" data-type="dog">
+          <div class="type-opt-icon" id="reg-type-dog"></div>
+          <div class="type-opt-label">Dog</div>
+        </div>
+        <div class="type-opt" data-type="cat">
+          <div class="type-opt-icon" id="reg-type-cat"></div>
+          <div class="type-opt-label">Cat</div>
+        </div>
+        <div class="type-opt" data-type="fish">
+          <div class="type-opt-icon" id="reg-type-fish"></div>
+          <div class="type-opt-label">Fish</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Food Note <span style="color:var(--mu);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label>
+      <textarea id="reg-food" placeholder="e.g. Grain-free kibble, Royal Canin, flake food" rows="2"></textarea>
+    </div>
+
+    <button class="btn-submit" onclick="submitAddPet()">Register Pet</button>
+    <button class="btn-cancel" onclick="hideModal('modal-add');regCam.stop();">Cancel</button>
+  </div>
+</div>
+
+<!-- Confirm Feed Modal -->
+<div class="backdrop" id="modal-confirm">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Confirm Feeding</div>
+
+    <div class="confirm-row">
+      <div class="pet-avatar" id="confirm-avatar" style="width:44px;height:44px;border-radius:10px;font-size:0;flex-shrink:0;border:1.5px solid;"></div>
+      <div>
+        <div class="confirm-name" id="confirm-name"></div>
+        <div class="confirm-sub" id="confirm-sub"></div>
+      </div>
+      <div class="confirm-kcal" id="confirm-kcal"></div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <div style="font-family:var(--mono);font-size:.58rem;font-weight:500;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:9px;">Nutrition per serving</div>
+      <div class="nut-grid" id="confirm-nut"></div>
+    </div>
+
+    <div class="confirm-note hidden" id="confirm-food-note-wrap">
+      <span id="confirm-note-ico"></span>
+      <span id="confirm-food-note"></span>
+    </div>
+
+    <button class="btn-submit" onclick="doFeed(confirmPetId)">Dispense Now</button>
+    <button class="btn-cancel" onclick="hideModal('modal-confirm')">Cancel</button>
+  </div>
+</div>
+
+<!-- Add Schedule Modal -->
+<div class="backdrop" id="modal-sched">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">New Auto Schedule</div>
+
+    <div class="field">
+      <label class="field-label">Pet</label>
+      <select id="sched-pet"></select>
+    </div>
+    <div class="field">
+      <label class="field-label">Time</label>
+      <input id="sched-time" type="time" value="08:00">
+    </div>
+    <div class="field">
+      <label class="field-label">Repeat</label>
+      <div class="day-wrap" id="sched-days"></div>
+    </div>
+
+    <button class="btn-submit" onclick="submitAddSched()">Add Schedule</button>
+    <button class="btn-cancel" onclick="hideModal('modal-sched')">Cancel</button>
+  </div>
+</div>
+
+
+<!-- Scripts -->
+<script src="./js/db.js"></script>
+<script src="./js/icons.js"></script>
+<script src="./js/camera.js"></script>
+<script src="./js/app.js"></script>
+
+<script>
+// Inject SVG icons after DOM is ready
+(function injectIcons() {
+  // Tab bar icons
+  document.getElementById('tb-ico-dash').innerHTML  = Icons.home(19);
+  document.getElementById('tb-ico-log').innerHTML   = Icons.barChart(19);
+  document.getElementById('tb-ico-scan').innerHTML  = Icons.scan(19);
+  document.getElementById('tb-ico-sched').innerHTML = Icons.calendar(19);
+  document.getElementById('tb-ico-config').innerHTML= Icons.settings(19);
+
+  // Summary strip icons
+  document.getElementById('ico-pets').innerHTML   = Icons.shield(14);
+  document.getElementById('ico-feeds').innerHTML  = Icons.utensils(14);
+  document.getElementById('ico-today').innerHTML  = Icons.activity(14);
+
+  // Add pet button
+  document.getElementById('add-icon').innerHTML   = Icons.plus(15);
+
+  // Install banner
+  document.getElementById('install-ico').innerHTML = Icons.download(20);
+  document.getElementById('install-arr').innerHTML = Icons.chevronRight(16);
+
+  // Sched add
+  document.getElementById('sched-add-ico').innerHTML = Icons.plus(15);
+
+  // Scan buttons
+  document.getElementById('scan-icon-wrap').innerHTML   = Icons.scan(36);
+  document.getElementById('scan-start-ico').innerHTML   = Icons.camera(14);
+  document.getElementById('scan-scan-ico').innerHTML    = Icons.scan(14);
+  document.getElementById('scan-again-ico').innerHTML   = Icons.rotateCcw(14);
+  document.getElementById('scan-stop-ico').innerHTML    = Icons.stop(14);
+
+  // Reg modal icons
+  document.getElementById('reg-cam-icon').innerHTML  = Icons.camera(30);
+  document.getElementById('reg-ico-cam').innerHTML   = Icons.camera(14);
+  document.getElementById('reg-ico-play').innerHTML  = Icons.play(13);
+  document.getElementById('reg-ico-retake').innerHTML= Icons.rotateCcw(13);
+  document.getElementById('reg-ico-upload').innerHTML= Icons.upload(13);
+  document.getElementById('reg-ico-stop').innerHTML  = Icons.stop(13);
+  document.getElementById('reg-det-ico').innerHTML   = Icons.check(14);
+
+  // Type icons
+  document.getElementById('reg-type-dog').innerHTML  = Icons.dog(24);
+  document.getElementById('reg-type-cat').innerHTML  = Icons.cat(24);
+  document.getElementById('reg-type-fish').innerHTML = Icons.fish(24);
+
+  // Confirm note
+  document.getElementById('confirm-note-ico').innerHTML = Icons.info(13);
+})();
+</script>
+
+</body>
+</html>
