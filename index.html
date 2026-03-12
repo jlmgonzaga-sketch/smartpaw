@@ -154,6 +154,22 @@
   .info-box { background:var(--b2); border-radius:10px; padding:12px 14px; }
   .info-box-title { font-size:.72rem; font-weight:600; margin-bottom:5px; }
   .info-box-body { font-size:.72rem; color:var(--mu2); line-height:1.5; }
+  .cam-box { width:100%; aspect-ratio:4/3; background:#111; border-radius:12px; overflow:hidden; position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer; margin-bottom:10px; }
+  .cam-hint { font-size:.72rem; color:rgba(255,255,255,.4); font-family:'DM Mono',monospace; }
+  .cam-btn { background:var(--b2); color:var(--t2); border:1px solid var(--b1); border-radius:8px; padding:7px 12px; font-size:.72rem; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; display:inline-flex; align-items:center; gap:5px; }
+  .cam-btn.primary { background:var(--ac); color:#fff; border-color:var(--ac); }
+  .cam-btn.hidden { display:none; }
+  .cam-controls { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+  .cam-overlay { position:absolute; inset:0; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; }
+  .cam-overlay.hidden { display:none; }
+  .detected-badge { background:var(--gr-bg); color:var(--gr); border-radius:8px; padding:7px 12px; font-size:.75rem; font-weight:600; display:flex; align-items:center; gap:6px; margin-bottom:10px; }
+  .detected-badge.hidden { display:none; }
+  .type-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .type-opt { background:var(--b2); border-radius:10px; padding:12px 8px; text-align:center; cursor:pointer; border:2px solid transparent; transition:all .15s; }
+  .type-opt.selected { border-color:var(--ac); background:var(--ac-bg); }
+  .type-opt-icon { margin-bottom:4px; display:flex; justify-content:center; }
+  .type-opt-label { font-size:.7rem; font-weight:500; }
+  .field textarea { width:100%; background:var(--b2); border:1px solid var(--b1); border-radius:8px; padding:9px 12px; font-size:.8rem; font-family:'DM Sans',sans-serif; color:var(--t1); outline:none; resize:none; }
   @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.5;} }
   .dispensing-anim { animation:pulse .6s ease infinite; }
 </style>
@@ -286,7 +302,7 @@
         </div>
       </div>
 
-      <button class="add-btn" onclick="showToast('Pet registration available in full app','info')">
+      <button class="add-btn" onclick="openAddPet()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Register New Pet
       </button>
@@ -411,6 +427,91 @@
       <span style="font-size:.6rem;">Config</span>
     </button>
   </nav>
+
+  <!-- MODAL: Register Pet -->
+  <div class="backdrop" id="modal-add">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Register New Pet</div>
+
+      <div class="cam-box" id="reg-cam-box" onclick="if(!regCam.stream&&!regCam.captured)regStartCamera()">
+        <video id="reg-video" playsinline muted autoplay style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
+        <img id="reg-preview" alt="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+        <canvas id="reg-canvas" style="display:none;"></canvas>
+        <div id="reg-cam-hint" style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span class="cam-hint">Tap to open camera</span>
+        </div>
+        <div id="reg-overlay" class="cam-overlay hidden"></div>
+      </div>
+
+      <div class="cam-controls">
+        <button class="cam-btn primary" id="reg-btn-start" onclick="regStartCamera()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Camera
+        </button>
+        <button class="cam-btn primary hidden" id="reg-btn-capture" onclick="regCapture()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Capture
+        </button>
+        <button class="cam-btn hidden" id="reg-btn-retake" onclick="regRetake()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
+          Retake
+        </button>
+        <label class="cam-btn" style="cursor:pointer;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          Upload
+          <input type="file" accept="image/*" style="display:none;" onchange="regFromFile(this)">
+        </label>
+        <button class="cam-btn hidden" id="reg-btn-stop" onclick="regStop()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        </button>
+      </div>
+
+      <div class="detected-badge hidden" id="reg-detected">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="reg-detected-text">Detected: Dog</span>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Pet Name</label>
+        <input id="reg-name" type="text" placeholder="e.g. Mochi, Buddy, Nemo" maxlength="32">
+      </div>
+
+      <div class="field">
+        <label class="field-label">Pet Type</label>
+        <input id="reg-type-val" type="hidden" value="">
+        <div class="type-grid">
+          <div class="type-opt" data-type="dog" onclick="selectType(this)">
+            <div class="type-opt-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="4.5" cy="9.5" r="2.5"/><circle cx="9" cy="4.5" r="2.5"/><circle cx="15" cy="4.5" r="2.5"/><circle cx="19.5" cy="9.5" r="2.5"/><path d="M12 22c-3.9 0-7-2.7-7-6 0-1.7.7-3.4 2-4.7l.4-.4c.7-.7 1.6-1.3 2.6-1.6.6-.2 1.3-.3 2-.3s1.4.1 2 .3c1 .3 1.9.9 2.6 1.6l.4.4c1.3 1.3 2 3 2 4.7 0 3.3-3.1 6-7 6z"/></svg>
+            </div>
+            <div class="type-opt-label">Dog</div>
+          </div>
+          <div class="type-opt" data-type="cat" onclick="selectType(this)">
+            <div class="type-opt-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 17 22 12 22S3 17.9 3 13.44c0-1.2.43-2.37 1-3.44 0 0-1.8-6.42-.42-7 1.39-.58 4.65.26 6.42 2.26.65-.17 1.33-.26 2-.26z"/><path d="M8 14v.5"/><path d="M16 14v.5"/></svg>
+            </div>
+            <div class="type-opt-label">Cat</div>
+          </div>
+          <div class="type-opt" data-type="fish" onclick="selectType(this)">
+            <div class="type-opt-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 12c0-3.9 2.7-7 6-7 1.7 0 3.4.7 4.7 2l.4.4c.7.7 1.3 1.6 1.6 2.6.2.6.3 1.3.3 2s-.1 1.4-.3 2c-.3 1-.9 1.9-1.6 2.6l-.4.4c-1.3 1.3-3 2-4.7 2-3.3 0-6-3.1-6-7z"/><path d="M6.5 12H2"/><path d="M2 9l4.5 3L2 15"/></svg>
+            </div>
+            <div class="type-opt-label">Fish</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Food Note <span style="color:var(--mu);font-weight:400;font-size:.65rem;">(optional)</span></label>
+        <textarea id="reg-food" placeholder="e.g. Grain-free kibble, Royal Canin, flake food" rows="2"></textarea>
+      </div>
+
+      <button class="btn-submit" onclick="submitAddPet()">Register Pet</button>
+      <button class="btn-cancel" onclick="closeAddPet()">Cancel</button>
+    </div>
+  </div>
 
   <!-- MODAL -->
   <div class="backdrop" id="modal-sched">
@@ -582,7 +683,136 @@ function showToast(msg,type='info'){
   setTimeout(()=>t.remove(),3000);
 }
 
-function testConn(){
+// ── PET REGISTRATION ──
+const regCam = { stream: null, captured: false };
+const registeredPets = [
+  { id:'mochi', name:'Mochi', type:'dog', food:'Royal Canin', avatarBg:'#fef3c7', avatarColor:'#b45309' },
+  { id:'luna',  name:'Luna',  type:'cat', food:'Whiskas',     avatarBg:'#e0f2fe', avatarColor:'#0369a1' },
+];
+
+function openAddPet() {
+  document.getElementById('modal-add').classList.add('open');
+}
+function closeAddPet() {
+  document.getElementById('modal-add').classList.remove('open');
+  regStop();
+  document.getElementById('reg-name').value = '';
+  document.getElementById('reg-food').value = '';
+  document.getElementById('reg-type-val').value = '';
+  document.getElementById('reg-preview').style.display = 'none';
+  document.getElementById('reg-cam-hint').style.display = 'flex';
+  document.getElementById('reg-detected').classList.add('hidden');
+  document.querySelectorAll('.type-opt').forEach(o => o.classList.remove('selected'));
+  resetRegButtons();
+  regCam.captured = false;
+}
+
+function regStartCamera() {
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+    .then(stream => {
+      regCam.stream = stream;
+      const video = document.getElementById('reg-video');
+      video.srcObject = stream; video.style.display = 'block';
+      document.getElementById('reg-cam-hint').style.display = 'none';
+      document.getElementById('reg-btn-start').classList.add('hidden');
+      document.getElementById('reg-btn-capture').classList.remove('hidden');
+      document.getElementById('reg-btn-stop').classList.remove('hidden');
+    })
+    .catch(() => showToast('Camera access denied', 'error'));
+}
+
+function regCapture() {
+  const video = document.getElementById('reg-video');
+  const canvas = document.getElementById('reg-canvas');
+  const preview = document.getElementById('reg-preview');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  preview.src = canvas.toDataURL('image/jpeg');
+  preview.style.display = 'block'; video.style.display = 'none';
+  regStop(); regCam.captured = true;
+  document.getElementById('reg-btn-capture').classList.add('hidden');
+  document.getElementById('reg-btn-retake').classList.remove('hidden');
+  document.getElementById('reg-btn-stop').classList.add('hidden');
+  showToast('Photo captured', 'success');
+}
+
+function regRetake() {
+  regCam.captured = false;
+  document.getElementById('reg-preview').style.display = 'none';
+  document.getElementById('reg-btn-retake').classList.add('hidden');
+  regStartCamera();
+}
+
+function regFromFile(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('reg-preview');
+    preview.src = e.target.result; preview.style.display = 'block';
+    document.getElementById('reg-cam-hint').style.display = 'none';
+    document.getElementById('reg-btn-retake').classList.remove('hidden');
+    regCam.captured = true;
+    showToast('Photo uploaded', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function regStop() {
+  if (regCam.stream) { regCam.stream.getTracks().forEach(t => t.stop()); regCam.stream = null; }
+  document.getElementById('reg-video').style.display = 'none';
+}
+
+function resetRegButtons() {
+  document.getElementById('reg-btn-start').classList.remove('hidden');
+  document.getElementById('reg-btn-capture').classList.add('hidden');
+  document.getElementById('reg-btn-retake').classList.add('hidden');
+  document.getElementById('reg-btn-stop').classList.add('hidden');
+}
+
+function selectType(el) {
+  document.querySelectorAll('.type-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('reg-type-val').value = el.dataset.type;
+}
+
+function submitAddPet() {
+  const name = document.getElementById('reg-name').value.trim();
+  const type = document.getElementById('reg-type-val').value;
+  const food = document.getElementById('reg-food').value.trim();
+  if (!name) { showToast('Please enter a pet name', 'error'); return; }
+  if (!type) { showToast('Please select a pet type', 'error'); return; }
+
+  const id = name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
+  const colors = { dog: { bg:'#fef3c7', color:'#b45309' }, cat: { bg:'#e0f2fe', color:'#0369a1' }, fish: { bg:'#dcfce7', color:'#15803d' } };
+  const c = colors[type];
+  const icons = {
+    dog: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${c.color}" stroke-width="1.8" stroke-linecap="round"><circle cx="4.5" cy="9.5" r="2.5"/><circle cx="9" cy="4.5" r="2.5"/><circle cx="15" cy="4.5" r="2.5"/><circle cx="19.5" cy="9.5" r="2.5"/><path d="M12 22c-3.9 0-7-2.7-7-6 0-1.7.7-3.4 2-4.7l.4-.4c.7-.7 1.6-1.3 2.6-1.6.6-.2 1.3-.3 2-.3s1.4.1 2 .3c1 .3 1.9.9 2.6 1.6l.4.4c1.3 1.3 2 3 2 4.7 0 3.3-3.1 6-7 6z"/></svg>`,
+    cat: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${c.color}" stroke-width="1.8" stroke-linecap="round"><path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 17 22 12 22S3 17.9 3 13.44c0-1.2.43-2.37 1-3.44 0 0-1.8-6.42-.42-7 1.39-.58 4.65.26 6.42 2.26.65-.17 1.33-.26 2-.26z"/><path d="M8 14v.5"/><path d="M16 14v.5"/></svg>`,
+    fish: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${c.color}" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 12c0-3.9 2.7-7 6-7 1.7 0 3.4.7 4.7 2l.4.4c.7.7 1.3 1.6 1.6 2.6.2.6.3 1.3.3 2s-.1 1.4-.3 2c-.3 1-.9 1.9-1.6 2.6l-.4.4c-1.3 1.3-3 2-4.7 2-3.3 0-6-3.1-6-7z"/><path d="M6.5 12H2"/><path d="M2 9l4.5 3L2 15"/></svg>`,
+  };
+
+  const card = document.createElement('div');
+  card.className = 'pet-card';
+  card.innerHTML = `
+    <div class="pet-avatar" style="background:${c.bg};">${icons[type]}</div>
+    <div class="pet-info">
+      <div class="pet-name">${name}</div>
+      <div class="pet-type">${type.charAt(0).toUpperCase()+type.slice(1)}${food ? ' · ' + food : ''}</div>
+      <div class="pet-last" id="last-${id}">Not fed yet</div>
+    </div>
+    <button class="feed-btn" id="btn-${id}" onclick="dispense('${id}','${name}')">Feed</button>`;
+  document.getElementById('pet-list').appendChild(card);
+
+  const count = document.querySelectorAll('.pet-card').length;
+  document.querySelector('.sec-count').textContent = count + ' pet' + (count > 1 ? 's' : '');
+  document.getElementById('tb-pets') && (document.getElementById('tb-pets').textContent = count + ' pets');
+  document.getElementById('sum-pets') && (document.getElementById('sum-pets').textContent = count);
+
+  showToast(name + ' registered successfully', 'success');
+  closeAddPet();
+}
+
+
   showToast('Connecting to Adafruit IO...','info');
   setTimeout(()=>showToast('Connected to Adafruit IO','success'),1500);
 }
