@@ -79,6 +79,9 @@
   .pet-last { font-size: .65rem; color: var(--mu); margin-top: 3px; font-family: 'DM Mono', monospace; }
   .feed-btn { background: var(--ac); color: #fff; border: none; border-radius: 9px; padding: 7px 14px; font-size: .72rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background .15s; flex-shrink: 0; }
   .feed-btn.dispensing { background: var(--gr); }
+  .water-btn { background: #e0f2fe; color: #0369a1; border: none; border-radius: 9px; padding: 7px 10px; font-size: .72rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background .15s; flex-shrink: 0; display: flex; align-items: center; gap: 4px; }
+  .water-btn.dispensing { background: #bae6fd; }
+  .pet-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
   .add-btn { width: 100%; background: var(--ac-bg); color: var(--ac); border: 1.5px dashed var(--ac-light); border-radius: var(--radius); padding: 12px; font-size: .8rem; font-weight: 600; cursor: pointer; margin-bottom: 12px; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; }
   .page-header { margin-bottom: 16px; }
   .page-title { font-size: 1.1rem; font-weight: 600; letter-spacing: -.02em; }
@@ -287,7 +290,10 @@
             <div class="pet-type">Dog · Royal Canin</div>
             <div class="pet-last" id="mochi-last">Last fed: 2h ago</div>
           </div>
-          <button class="feed-btn" id="btn-mochi" onclick="dispense('mochi','Mochi')">Feed</button>
+          <div class="pet-card-actions">
+            <button class="water-btn" id="wbtn-mochi" onclick="dispenseWater('mochi','Mochi')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>Water</button>
+            <button class="feed-btn" id="btn-mochi" onclick="dispense('mochi','Mochi')">Feed</button>
+          </div>
         </div>
         <div class="pet-card">
           <div class="pet-avatar" style="background:#e0f2fe;">
@@ -298,7 +304,10 @@
             <div class="pet-type">Cat · Whiskas</div>
             <div class="pet-last" id="luna-last">Last fed: 5h ago</div>
           </div>
-          <button class="feed-btn" id="btn-luna" onclick="dispense('luna','Luna')">Feed</button>
+          <div class="pet-card-actions">
+            <button class="water-btn" id="wbtn-luna" onclick="dispenseWater('luna','Luna')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>Water</button>
+            <button class="feed-btn" id="btn-luna" onclick="dispense('luna','Luna')">Feed</button>
+          </div>
         </div>
       </div>
 
@@ -332,7 +341,6 @@
 
     <!-- SCAN -->
     <div id="page-scan" class="tab-page">
-      <div class="page-header"><div class="page-title">Pet Scanner</div><div class="page-sub">AI identification via TensorFlow MobileNet</div></div>
       <div class="scan-frame">
         <div class="scan-overlay" id="scan-overlay">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -354,7 +362,7 @@
       </div>
       <div class="info-box">
         <div class="info-box-title">How It Works</div>
-        <div class="info-box-body">Point your camera at a pet and press Scan. TensorFlow.js MobileNet analyzes the image and identifies dogs, cats, or fish — then matches to registered profiles automatically.</div>
+        <div class="info-box-body">Point your camera at a pet and press Scan. Analyzes the image and identifies pets — then matches to registered profiles automatically.</div>
       </div>
     </div>
 
@@ -569,6 +577,20 @@ function switchTab(tab,btn){
   document.getElementById('page-'+tab).classList.add('active');
   if(btn)btn.classList.add('active');
   document.getElementById('tb-page').textContent=pageLabels[tab];
+}
+
+function dispenseWater(id, name) {
+  const btn = document.getElementById('wbtn-' + id);
+  if (btn.disabled) return;
+  btn.disabled = true; btn.classList.add('dispensing');
+  showToast('Dispensing water for ' + name + '...', 'info');
+  setTimeout(() => {
+    logData.unshift({ type:'water', pet:name, time:'Just now', amount:'150ml', kcal:'—' });
+    buildLog();
+    showToast(name + ' watered — 150ml dispensed', 'success');
+    document.getElementById('log-total-water') && (document.getElementById('log-total-water').textContent = parseInt(document.getElementById('log-total-water').textContent||0) + 1);
+    setTimeout(() => { btn.classList.remove('dispensing'); btn.disabled = false; }, 2000);
+  }, 1500);
 }
 
 function dispense(id,name){
@@ -800,7 +822,10 @@ function submitAddPet() {
       <div class="pet-type">${type.charAt(0).toUpperCase()+type.slice(1)}${food ? ' · ' + food : ''}</div>
       <div class="pet-last" id="last-${id}">Not fed yet</div>
     </div>
-    <button class="feed-btn" id="btn-${id}" onclick="dispense('${id}','${name}')">Feed</button>`;
+    <div class="pet-card-actions">
+      <button class="water-btn" id="wbtn-${id}" onclick="dispenseWater('${id}','${name}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>Water</button>
+      <button class="feed-btn" id="btn-${id}" onclick="dispense('${id}','${name}')">Feed</button>
+    </div>`;
   document.getElementById('pet-list').appendChild(card);
 
   const count = document.querySelectorAll('.pet-card').length;
