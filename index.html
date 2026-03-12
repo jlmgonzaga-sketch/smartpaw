@@ -291,8 +291,8 @@
             <div class="pet-last" id="mochi-last">Last fed: 2h ago</div>
           </div>
           <div class="pet-card-actions">
-            <button class="water-btn" id="wbtn-mochi" onclick="dispenseWater('mochi','Mochi')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>Water</button>
-            <button class="feed-btn" id="btn-mochi" onclick="dispense('mochi','Mochi')">Feed</button>
+            <button class="water-btn" id="wbtn-mochi" onclick="dispenseWater('mochi','Mochi',150)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>150ml</button>
+            <button class="feed-btn" id="btn-mochi" onclick="dispense('mochi','Mochi',45)">45g</button>
           </div>
         </div>
         <div class="pet-card">
@@ -305,8 +305,8 @@
             <div class="pet-last" id="luna-last">Last fed: 5h ago</div>
           </div>
           <div class="pet-card-actions">
-            <button class="water-btn" id="wbtn-luna" onclick="dispenseWater('luna','Luna')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>Water</button>
-            <button class="feed-btn" id="btn-luna" onclick="dispense('luna','Luna')">Feed</button>
+            <button class="water-btn" id="wbtn-luna" onclick="dispenseWater('luna','Luna',120)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>120ml</button>
+            <button class="feed-btn" id="btn-luna" onclick="dispense('luna','Luna',30)">30g</button>
           </div>
         </div>
       </div>
@@ -341,6 +341,7 @@
 
     <!-- SCAN -->
     <div id="page-scan" class="tab-page">
+      <div class="page-header"><div class="page-title">Pet Scanner</div><div class="page-sub">AI identification via TensorFlow MobileNet</div></div>
       <div class="scan-frame">
         <div class="scan-overlay" id="scan-overlay">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -362,7 +363,7 @@
       </div>
       <div class="info-box">
         <div class="info-box-title">How It Works</div>
-        <div class="info-box-body">Point your camera at a pet and press Scan. Analyzes the image and identifies pets — then matches to registered profiles automatically.</div>
+        <div class="info-box-body">Point your camera at a pet and press Scan. TensorFlow.js MobileNet analyzes the image and identifies dogs, cats, or fish — then matches to registered profiles automatically.</div>
       </div>
     </div>
 
@@ -516,6 +517,23 @@
         <textarea id="reg-food" placeholder="e.g. Grain-free kibble, Royal Canin, flake food" rows="2"></textarea>
       </div>
 
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="field" style="margin-bottom:0;">
+          <label class="field-label">Food Per Serving</label>
+          <div style="position:relative;">
+            <input id="reg-portion" type="number" min="5" max="500" value="30" placeholder="30">
+            <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.72rem;color:var(--mu);font-family:'DM Mono',monospace;">g</span>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label class="field-label">Water Per Serving</label>
+          <div style="position:relative;">
+            <input id="reg-water" type="number" min="10" max="1000" value="150" placeholder="150">
+            <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.72rem;color:var(--mu);font-family:'DM Mono',monospace;">ml</span>
+          </div>
+        </div>
+      </div>
+
       <button class="btn-submit" onclick="submitAddPet()">Register Pet</button>
       <button class="btn-cancel" onclick="closeAddPet()">Cancel</button>
     </div>
@@ -579,44 +597,46 @@ function switchTab(tab,btn){
   document.getElementById('tb-page').textContent=pageLabels[tab];
 }
 
-function dispenseWater(id, name) {
+function dispenseWater(id, name, ml) {
+  ml = ml || 150;
   const btn = document.getElementById('wbtn-' + id);
   if (btn.disabled) return;
   btn.disabled = true; btn.classList.add('dispensing');
   showToast('Dispensing water for ' + name + '...', 'info');
   setTimeout(() => {
-    logData.unshift({ type:'water', pet:name, time:'Just now', amount:'150ml', kcal:'—' });
+    logData.unshift({ type:'water', pet:name, time:'Just now', amount:ml+'ml', kcal:'—' });
     buildLog();
-    showToast(name + ' watered — 150ml dispensed', 'success');
-    document.getElementById('log-total-water') && (document.getElementById('log-total-water').textContent = parseInt(document.getElementById('log-total-water').textContent||0) + 1);
+    showToast(name + ' watered — ' + ml + 'ml dispensed', 'success');
     setTimeout(() => { btn.classList.remove('dispensing'); btn.disabled = false; }, 2000);
   }, 1500);
 }
 
-function dispense(id,name){
+function dispense(id,name,grams){
+  grams = grams || 30;
   const btn=document.getElementById('btn-'+id);
   if(btn.disabled)return;
   btn.disabled=true; btn.textContent='Sending...'; btn.classList.add('dispensing-anim');
   setTimeout(()=>{
     btn.textContent='Dispensing'; btn.classList.add('dispensing');
     showToast('Dispensing food for '+name+'...','info');
-    foodWeight=Math.max(10,foodWeight-30);
+    foodWeight=Math.max(10,foodWeight-grams);
     document.getElementById('food-weight').textContent=foodWeight;
     document.getElementById('food-bar').style.width=Math.round(foodWeight/200*100)+'%';
     setTimeout(()=>{
-      btn.textContent='Done!'; btn.classList.remove('dispensing-anim');
-      document.getElementById(id+'-last').textContent='Last fed: just now';
-      totalFeeds++; todayFeeds++; todayKcal+=94;
+      btn.textContent=grams+'g'; btn.classList.remove('dispensing-anim');
+      document.getElementById(id+'-last') && (document.getElementById(id+'-last').textContent='Last fed: just now');
+      document.getElementById('last-'+id) && (document.getElementById('last-'+id).textContent='Last fed: just now');
+      totalFeeds++; todayFeeds++; todayKcal+=Math.round(grams*3.14);
       document.getElementById('sum-total').textContent=totalFeeds;
       document.getElementById('sum-today').textContent=todayFeeds;
       document.getElementById('log-total').textContent=totalFeeds;
       document.getElementById('log-today').textContent=todayFeeds;
       document.getElementById('log-kcal').textContent=todayKcal;
       document.getElementById('log-sub').textContent=todayFeeds+' feedings today';
-      logData.unshift({type:'food',pet:name,time:'Just now',amount:'30g',kcal:'94 kcal'});
+      logData.unshift({type:'food',pet:name,time:'Just now',amount:grams+'g',kcal:Math.round(grams*3.14)+' kcal'});
       buildLog();
-      showToast(name+' fed — 30g dispensed','success');
-      setTimeout(()=>{btn.textContent='Feed';btn.classList.remove('dispensing');btn.disabled=false;},2000);
+      showToast(name+' fed — '+grams+'g dispensed','success');
+      setTimeout(()=>{btn.classList.remove('dispensing');btn.disabled=false;},2000);
     },2000);
   },800);
 }
@@ -801,6 +821,8 @@ function submitAddPet() {
   const name = document.getElementById('reg-name').value.trim();
   const type = document.getElementById('reg-type-val').value;
   const food = document.getElementById('reg-food').value.trim();
+  const portion = parseInt(document.getElementById('reg-portion').value) || 30;
+  const water = parseInt(document.getElementById('reg-water').value) || 150;
   if (!name) { showToast('Please enter a pet name', 'error'); return; }
   if (!type) { showToast('Please select a pet type', 'error'); return; }
 
@@ -823,21 +845,20 @@ function submitAddPet() {
       <div class="pet-last" id="last-${id}">Not fed yet</div>
     </div>
     <div class="pet-card-actions">
-      <button class="water-btn" id="wbtn-${id}" onclick="dispenseWater('${id}','${name}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>Water</button>
-      <button class="feed-btn" id="btn-${id}" onclick="dispense('${id}','${name}')">Feed</button>
+      <button class="water-btn" id="wbtn-${id}" onclick="dispenseWater('${id}','${name}',${water})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>${water}ml</button>
+      <button class="feed-btn" id="btn-${id}" onclick="dispense('${id}','${name}',${portion})">${portion}g</button>
     </div>`;
   document.getElementById('pet-list').appendChild(card);
 
   const count = document.querySelectorAll('.pet-card').length;
   document.querySelector('.sec-count').textContent = count + ' pet' + (count > 1 ? 's' : '');
-  document.getElementById('tb-pets') && (document.getElementById('tb-pets').textContent = count + ' pets');
-  document.getElementById('sum-pets') && (document.getElementById('sum-pets').textContent = count);
 
-  showToast(name + ' registered successfully', 'success');
+  showToast(name + ' registered — ' + portion + 'g food, ' + water + 'ml water per serving', 'success');
   closeAddPet();
 }
 
 
+function testConn(){
   showToast('Connecting to Adafruit IO...','info');
   setTimeout(()=>showToast('Connected to Adafruit IO','success'),1500);
 }
