@@ -1,479 +1,610 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#f6f4f1">
-  <meta name="description" content="SmartPaw — Smart IoT Pet Feeder with AI recognition">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="SmartPaw">
-  <meta name="mobile-web-app-capable" content="yes">
-  <link rel="manifest" href="./manifest.json">
-  <link rel="apple-touch-icon" href="./icons/icon-192.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
-  <link rel="stylesheet" href="./css/style.css">
-  <title>SmartPaw</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SmartPaw Demo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f6f4f1; --card: #ffffff; --ac: #2563eb; --ac-bg: #eff4ff; --ac-light: #dbeafe;
+    --gr: #16a34a; --gr-bg: #dcfce7; --wa: #d97706; --wa-bg: #fef3c7;
+    --er: #dc2626; --er-bg: #fee2e2; --t1: #111827; --t2: #374151;
+    --mu: #9ca3af; --mu2: #6b7280; --b1: #e5e7eb; --b2: #f3f4f6;
+    --radius: 14px; --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.04);
+  }
+  html, body { height: 100%; background: #d1d5db; font-family: 'DM Sans', sans-serif; color: var(--t1); }
+  .shell { width: 390px; height: 844px; margin: 24px auto; background: var(--bg); border-radius: 40px; box-shadow: 0 24px 80px rgba(0,0,0,.22), 0 0 0 10px #1a1a1a, 0 0 0 12px #3a3a3a; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+  .topbar { background: var(--ac); color: #fff; padding: 52px 20px 14px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 1.05rem; letter-spacing: -.01em; }
+  .logo-mark { width: 28px; height: 28px; background: rgba(255,255,255,.2); border-radius: 8px; display: grid; place-items: center; }
+  .topbar-chips { display: flex; gap: 6px; }
+  .chip { font-size: .65rem; font-weight: 600; padding: 3px 9px; border-radius: 20px; font-family: 'DM Mono', monospace; }
+  .chip.blue { background: rgba(255,255,255,.2); color: #fff; }
+  .chip.green { background: #dcfce7; color: #15803d; }
+  .content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px 16px 80px; }
+  .content::-webkit-scrollbar { display: none; }
+  .tab-page { display: none; animation: fadeIn .2s ease; }
+  .tab-page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .tabbar { position: absolute; bottom: 0; left: 0; right: 0; height: 72px; background: rgba(255,255,255,.96); backdrop-filter: blur(12px); border-top: 1px solid var(--b1); display: flex; align-items: stretch; }
+  .tab-btn { flex: 1; background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--mu); font-size: .6rem; font-weight: 500; font-family: 'DM Sans', sans-serif; transition: color .15s; position: relative; padding-bottom: 8px; }
+  .tab-btn.active { color: var(--ac); }
+  .tab-indicator { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 0; height: 2px; background: var(--ac); border-radius: 0 0 2px 2px; transition: width .2s; }
+  .tab-btn.active .tab-indicator { width: 24px; }
+  .greeting { margin-bottom: 14px; }
+  .greeting-eyebrow { font-size: .65rem; font-weight: 600; color: var(--mu); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+  .greeting-title { font-size: 1.45rem; font-weight: 600; letter-spacing: -.02em; }
+  .greeting-sub { font-size: .78rem; color: var(--mu2); margin-top: 3px; }
+
+  /* LIVE CAM */
+  .live-cam-card { background: #0d0d0d; border-radius: var(--radius); overflow: hidden; margin-bottom: 14px; }
+  .live-cam-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #181818; }
+  .live-cam-title { font-size: .7rem; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 6px; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; animation: livePulse 1.4s ease infinite; }
+  @keyframes livePulse { 0%,100%{opacity:1;} 50%{opacity:.2;} }
+  .live-cam-stream { width: 100%; aspect-ratio: 16/9; background: #111; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+  .live-cam-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; color: rgba(255,255,255,.35); font-size: .7rem; font-family: 'DM Mono', monospace; }
+  .live-cam-footer { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; }
+  .live-cam-ip { font-size: .62rem; color: rgba(255,255,255,.3); font-family: 'DM Mono', monospace; }
+  .live-cam-btn { background: var(--ac); color: #fff; border: none; border-radius: 6px; padding: 5px 11px; font-size: .65rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background .2s; }
+  .cam-pet-badge { display: none; position: absolute; bottom: 8px; left: 8px; background: rgba(22,163,74,.9); color: #fff; font-size: .65rem; font-weight: 600; padding: 4px 9px; border-radius: 6px; font-family: 'DM Mono', monospace; }
+
+  .conn-bar { background: var(--card); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: space-between; }
+  .conn-label { font-size: .72rem; color: var(--t2); font-weight: 500; }
+  .status-badge { display: inline-flex; align-items: center; gap: 4px; font-size: .62rem; font-weight: 600; padding: 2px 7px; border-radius: 20px; font-family: 'DM Mono', monospace; }
+  .status-badge.online { background: var(--gr-bg); color: var(--gr); }
+  .status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .sensor-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .sensor-card { background: var(--card); border-radius: var(--radius); padding: 12px; box-shadow: var(--shadow); }
+  .sensor-label { font-size: .6rem; color: var(--mu); font-weight: 500; text-transform: uppercase; letter-spacing: .06em; font-family: 'DM Mono', monospace; margin-bottom: 6px; }
+  .sensor-val { font-size: 1.2rem; font-weight: 600; letter-spacing: -.02em; }
+  .sensor-unit { font-size: .65rem; color: var(--mu2); font-weight: 400; }
+  .sensor-bar { height: 4px; background: var(--b1); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .sensor-fill { height: 100%; border-radius: 2px; background: var(--ac); transition: width 1s ease; }
+  .summary-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
+  .summary-card { background: var(--card); border-radius: var(--radius); padding: 12px; box-shadow: var(--shadow); }
+  .summary-ico { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; margin-bottom: 8px; }
+  .summary-label { font-size: .6rem; color: var(--mu); font-weight: 500; text-transform: uppercase; letter-spacing: .06em; font-family: 'DM Mono', monospace; }
+  .summary-val { font-size: 1.3rem; font-weight: 600; letter-spacing: -.02em; }
+  .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .sec-title { font-size: .8rem; font-weight: 600; color: var(--t2); }
+  .sec-count { font-size: .65rem; color: var(--mu); font-family: 'DM Mono', monospace; }
+  .pet-card { background: var(--card); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px; }
+  .pet-avatar { width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; }
+  .pet-info { flex: 1; min-width: 0; }
+  .pet-name { font-weight: 600; font-size: .9rem; }
+  .pet-type { font-size: .7rem; color: var(--mu2); margin-top: 1px; }
+  .pet-last { font-size: .65rem; color: var(--mu); margin-top: 3px; font-family: 'DM Mono', monospace; }
+  .feed-btn { background: var(--ac); color: #fff; border: none; border-radius: 9px; padding: 7px 14px; font-size: .72rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background .15s; flex-shrink: 0; }
+  .feed-btn.dispensing { background: var(--gr); }
+  .add-btn { width: 100%; background: var(--ac-bg); color: var(--ac); border: 1.5px dashed var(--ac-light); border-radius: var(--radius); padding: 12px; font-size: .8rem; font-weight: 600; cursor: pointer; margin-bottom: 12px; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .page-header { margin-bottom: 16px; }
+  .page-title { font-size: 1.1rem; font-weight: 600; letter-spacing: -.02em; }
+  .page-sub { font-size: .75rem; color: var(--mu2); margin-top: 2px; }
+  .stats-hero { background: var(--ac); color: #fff; border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .stats-hero-label { font-size: .62rem; text-transform: uppercase; letter-spacing: .08em; opacity: .7; font-family: 'DM Mono', monospace; }
+  .stats-hero-val { font-size: 2rem; font-weight: 600; letter-spacing: -.03em; margin: 4px 0 2px; }
+  .stats-hero-unit { font-size: .9rem; font-weight: 400; opacity: .8; }
+  .stats-hero-sub { font-size: .72rem; opacity: .7; }
+  .stats-quad { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .stat-block { background: var(--card); border-radius: 10px; padding: 12px; box-shadow: var(--shadow); }
+  .stat-block-label { font-size: .6rem; color: var(--mu); font-weight: 500; text-transform: uppercase; letter-spacing: .06em; font-family: 'DM Mono', monospace; }
+  .stat-block-val { font-size: 1.4rem; font-weight: 600; letter-spacing: -.02em; margin-top: 2px; }
+  .filter-row { display: flex; gap: 6px; margin-bottom: 12px; }
+  .filter-pill { background: var(--b2); border: none; border-radius: 20px; padding: 5px 12px; font-size: .7rem; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--mu2); transition: all .15s; }
+  .filter-pill.on { background: var(--ac); color: #fff; }
+  .log-item { background: var(--card); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px; }
+  .log-ico { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; flex-shrink: 0; }
+  .log-ico.food { background: var(--ac-bg); }
+  .log-ico.water { background: #e0f2fe; }
+  .log-info { flex: 1; }
+  .log-title { font-size: .8rem; font-weight: 600; }
+  .log-meta { font-size: .65rem; color: var(--mu2); margin-top: 1px; }
+  .log-amount { font-size: .75rem; font-weight: 600; color: var(--ac); font-family: 'DM Mono', monospace; }
+  .scan-frame { background: #111; border-radius: var(--radius); aspect-ratio: 4/3; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+  .scan-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; color: rgba(255,255,255,.4); font-size: .75rem; font-family: 'DM Mono', monospace; }
+  .sc { position: absolute; width: 20px; height: 20px; border-color: rgba(255,255,255,.6); border-style: solid; }
+  .sc-tl { top:12px; left:12px; border-width:2px 0 0 2px; }
+  .sc-tr { top:12px; right:12px; border-width:2px 2px 0 0; }
+  .sc-bl { bottom:12px; left:12px; border-width:0 0 2px 2px; }
+  .sc-br { bottom:12px; right:12px; border-width:0 2px 2px 0; }
+  .scan-line-anim { position:absolute; left:12px; right:12px; height:2px; background:linear-gradient(90deg,transparent,#2563eb,transparent); border-radius:1px; animation:scanLine 2s ease-in-out infinite; display:none; }
+  @keyframes scanLine { 0%,100%{top:20%;} 50%{top:75%;} }
+  .scan-status { font-size:.72rem; color:var(--mu2); text-align:center; margin-bottom:12px; font-family:'DM Mono',monospace; }
+  .scan-result-box { background:var(--card); border-radius:var(--radius); padding:14px; box-shadow:var(--shadow); margin-bottom:12px; display:none; }
+  .scan-result-label { font-size:.62rem; color:var(--mu); text-transform:uppercase; letter-spacing:.08em; font-family:'DM Mono',monospace; }
+  .scan-result-val { font-size:1.05rem; font-weight:600; margin:4px 0 2px; }
+  .scan-result-match { font-size:.72rem; color:var(--gr); font-weight:500; }
+  .cam-btns { display:flex; gap:8px; margin-bottom:12px; }
+  .btn-primary { flex:1; background:var(--ac); color:#fff; border:none; border-radius:10px; padding:11px; font-size:.82rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .btn-secondary { flex:1; background:none; color:var(--ac); border:1.5px solid var(--ac-light); border-radius:10px; padding:10px; font-size:.82rem; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:500; }
+  .sched-card { background:var(--card); border-radius:var(--radius); padding:14px; margin-bottom:10px; box-shadow:var(--shadow); display:flex; align-items:center; gap:12px; }
+  .sched-time { font-size:1.2rem; font-weight:600; letter-spacing:-.02em; font-family:'DM Mono',monospace; flex-shrink:0; width:62px; }
+  .sched-info { flex:1; }
+  .sched-pet { font-size:.82rem; font-weight:600; }
+  .sched-days { font-size:.65rem; color:var(--mu2); margin-top:2px; }
+  .toggle { width:36px; height:20px; background:var(--b1); border-radius:10px; position:relative; cursor:pointer; transition:background .2s; flex-shrink:0; }
+  .toggle.on { background:var(--ac); }
+  .toggle::after { content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; background:#fff; border-radius:50%; transition:transform .2s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+  .toggle.on::after { transform:translateX(16px); }
+  .settings-block { background:var(--card); border-radius:var(--radius); padding:14px; margin-bottom:12px; box-shadow:var(--shadow); }
+  .settings-group-title { font-size:.65rem; font-weight:600; color:var(--mu); text-transform:uppercase; letter-spacing:.08em; margin-bottom:12px; font-family:'DM Mono',monospace; }
+  .field { margin-bottom:10px; }
+  .field-label { font-size:.7rem; font-weight:600; color:var(--t2); display:block; margin-bottom:5px; }
+  .field input, .field select { width:100%; background:var(--b2); border:1px solid var(--b1); border-radius:8px; padding:9px 12px; font-size:.8rem; font-family:'DM Sans',sans-serif; color:var(--t1); outline:none; }
+  .settings-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--b2); }
+  .settings-row:last-child { border-bottom:none; }
+  .settings-row-l { font-size:.78rem; color:var(--t2); }
+  .settings-row-r { font-size:.75rem; color:var(--mu2); font-family:'DM Mono',monospace; }
+  .btn-submit { width:100%; background:var(--ac); color:#fff; border:none; border-radius:10px; padding:11px; font-size:.82rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .btn-cancel { width:100%; background:none; color:var(--t2); border:1px solid var(--b1); border-radius:10px; padding:10px; font-size:.82rem; cursor:pointer; margin-top:7px; font-family:'DM Sans',sans-serif; }
+  .backdrop { position:absolute; inset:0; background:rgba(0,0,0,.4); z-index:100; display:none; align-items:flex-end; }
+  .backdrop.open { display:flex; animation:fadeIn .15s ease; }
+  .modal { background:var(--card); border-radius:20px 20px 0 0; width:100%; padding:20px 16px 32px; max-height:85%; overflow-y:auto; animation:slideUp .2s ease; }
+  @keyframes slideUp { from{transform:translateY(20px);opacity:0;} to{transform:none;opacity:1;} }
+  .modal-handle { width:32px; height:3px; background:var(--b1); border-radius:2px; margin:0 auto 16px; }
+  .modal-title { font-size:1rem; font-weight:600; margin-bottom:16px; }
+  .toast { position:absolute; top:100px; left:16px; right:16px; z-index:200; background:var(--t1); color:#fff; border-radius:10px; padding:11px 14px; font-size:.78rem; font-weight:500; animation:toastIn .25s ease; display:flex; align-items:center; gap:8px; pointer-events:none; }
+  .toast.success { background:#15803d; }
+  .toast.error { background:var(--er); }
+  @keyframes toastIn { from{opacity:0;transform:translateY(-8px);} to{opacity:1;transform:none;} }
+  .demo-banner { background:linear-gradient(135deg,#1e3a5f,#2563eb); color:#fff; text-align:center; padding:6px 12px; font-size:.62rem; font-family:'DM Mono',monospace; letter-spacing:.05em; flex-shrink:0; }
+  .info-box { background:var(--b2); border-radius:10px; padding:12px 14px; }
+  .info-box-title { font-size:.72rem; font-weight:600; margin-bottom:5px; }
+  .info-box-body { font-size:.72rem; color:var(--mu2); line-height:1.5; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.5;} }
+  .dispensing-anim { animation:pulse .6s ease infinite; }
+</style>
 </head>
 <body>
+<div class="shell">
+  <div class="demo-banner">SMARTPAW — INTERACTIVE DEMO</div>
 
-<div id="app">
-
-  <!-- Topbar -->
   <header class="topbar">
     <div class="logo">
       <div class="logo-mark">
-        <!-- Paw SVG -->
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <ellipse cx="12" cy="15.5" rx="4" ry="3.5"/>
-          <circle cx="7.5" cy="8" r="1.8"/>
-          <circle cx="12" cy="6" r="1.8"/>
-          <circle cx="16.5" cy="8" r="1.8"/>
+          <circle cx="7.5" cy="8" r="1.8"/><circle cx="12" cy="6" r="1.8"/><circle cx="16.5" cy="8" r="1.8"/>
         </svg>
       </div>
-      <span>Smart<span>Paw</span></span>
+      SmartPaw
     </div>
-    <div class="topbar-r">
+    <div class="topbar-chips">
       <span class="chip blue" id="tb-page">Dashboard</span>
-      <span class="chip green" id="tb-pet-count">0 pets</span>
+      <span class="chip green">2 pets</span>
     </div>
   </header>
 
-  <!-- Toasts -->
-  <div class="toast-wrap" id="toast-wrap"></div>
+  <div id="toast-wrap" style="position:absolute;top:110px;left:16px;right:16px;z-index:200;pointer-events:none;"></div>
 
-  <!-- Content -->
   <main class="content">
 
-    <!-- ══════════════ DASHBOARD ══════════════ -->
+    <!-- DASHBOARD -->
     <div id="page-dash" class="tab-page active">
-
-      <!-- Install banner -->
-      <div id="install-banner" class="install-banner hidden">
-        <div style="color:var(--ac);" id="install-ico"></div>
-        <div class="install-banner-text">
-          <div class="install-banner-title">Install SmartPaw</div>
-          <div class="install-banner-sub">Add to home screen for the full experience</div>
-        </div>
-        <div class="install-banner-arr" id="install-arr"></div>
-      </div>
-
-      <!-- Greeting -->
       <div class="greeting">
         <div class="greeting-eyebrow">SmartPaw IoT Feeder</div>
         <div class="greeting-title" id="greeting-text">Good morning</div>
-        <div class="greeting-sub" id="greeting-sub">Register your first pet to get started.</div>
+        <div class="greeting-sub">2 pets registered. Last fed 2h ago.</div>
       </div>
 
-      <!-- Summary -->
+      <!-- LIVE CAMERA -->
+      <div class="live-cam-card">
+        <div class="live-cam-header">
+          <div class="live-cam-title">
+            <span class="live-dot"></span>
+            Live Camera — ESP32-CAM
+          </div>
+          <span style="font-size:.62rem;color:rgba(255,255,255,.4);font-family:'DM Mono',monospace;">720p</span>
+        </div>
+        <div class="live-cam-stream" id="cam-stream">
+          <div class="live-cam-overlay" id="cam-overlay">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/>
+            </svg>
+            <span id="cam-overlay-text">Tap Connect to view live feed</span>
+          </div>
+          <div class="cam-pet-badge" id="cam-pet-badge"></div>
+        </div>
+        <div class="live-cam-footer">
+          <span class="live-cam-ip" id="cam-ip">http://192.168.1.42/stream</span>
+          <button class="live-cam-btn" id="cam-connect-btn" onclick="toggleCamStream()">Connect</button>
+        </div>
+      </div>
+
+      <div class="conn-bar">
+        <span class="conn-label">Device Connection</span>
+        <span class="status-badge online"><span class="status-dot"></span>Online</span>
+      </div>
+
+      <div class="sensor-strip">
+        <div class="sensor-card">
+          <div class="sensor-label">Food Level</div>
+          <div class="sensor-val"><span id="food-weight">142</span> <span class="sensor-unit">g</span></div>
+          <div class="sensor-bar"><div class="sensor-fill" id="food-bar" style="width:71%;"></div></div>
+        </div>
+        <div class="sensor-card">
+          <div class="sensor-label">Pet Detected</div>
+          <div class="sensor-val" id="pet-detected-val" style="color:var(--mu);font-size:.9rem;">None</div>
+          <div style="font-size:.62rem;color:var(--mu);margin-top:6px;font-family:'DM Mono',monospace;" id="sensor-dist">dist: --</div>
+        </div>
+      </div>
+
       <div class="summary-strip">
         <div class="summary-card">
-          <div class="summary-ico" style="background:var(--ac-bg);color:var(--ac);" id="ico-pets"></div>
+          <div class="summary-ico" style="background:var(--ac-bg);color:var(--ac);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </div>
           <div class="summary-label">Registered</div>
-          <div class="summary-val" id="sum-pets">0</div>
+          <div class="summary-val">2</div>
         </div>
         <div class="summary-card">
-          <div class="summary-ico" style="background:var(--gr-bg);color:var(--gr);" id="ico-feeds"></div>
+          <div class="summary-ico" style="background:var(--gr-bg);color:var(--gr);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+          </div>
           <div class="summary-label">All-time</div>
-          <div class="summary-val" id="sum-feedings">0</div>
+          <div class="summary-val" id="sum-total">47</div>
         </div>
         <div class="summary-card">
-          <div class="summary-ico" style="background:var(--wa-bg);color:var(--wa);" id="ico-today"></div>
+          <div class="summary-ico" style="background:var(--wa-bg);color:var(--wa);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
           <div class="summary-label">Today</div>
-          <div class="summary-val" id="sum-today">0</div>
+          <div class="summary-val" id="sum-today">3</div>
         </div>
       </div>
 
-      <!-- Section header -->
       <div class="sec-head">
         <span class="sec-title">Registered Pets</span>
-        <span class="sec-count" id="pet-count-label"></span>
+        <span class="sec-count">2 pets</span>
       </div>
 
-      <!-- Add pet -->
-      <button class="add-btn" onclick="openAddPet()" id="add-pet-btn">
-        <span id="add-icon"></span> Register New Pet
-      </button>
+      <div id="pet-list">
+        <div class="pet-card">
+          <div class="pet-avatar" style="background:#fef3c7;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="9.5" r="2.5"/><circle cx="9" cy="4.5" r="2.5"/><circle cx="15" cy="4.5" r="2.5"/><circle cx="19.5" cy="9.5" r="2.5"/><path d="M12 22c-3.9 0-7-2.7-7-6 0-1.7.7-3.4 2-4.7l.4-.4c.7-.7 1.6-1.3 2.6-1.6.6-.2 1.3-.3 2-.3s1.4.1 2 .3c1 .3 1.9.9 2.6 1.6l.4.4c1.3 1.3 2 3 2 4.7 0 3.3-3.1 6-7 6z"/></svg>
+          </div>
+          <div class="pet-info">
+            <div class="pet-name">Mochi</div>
+            <div class="pet-type">Dog · Royal Canin</div>
+            <div class="pet-last" id="mochi-last">Last fed: 2h ago</div>
+          </div>
+          <button class="feed-btn" id="btn-mochi" onclick="dispense('mochi','Mochi')">Feed</button>
+        </div>
+        <div class="pet-card">
+          <div class="pet-avatar" style="background:#e0f2fe;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 17 22 12 22S3 17.9 3 13.44c0-1.2.43-2.37 1-3.44 0 0-1.8-6.42-.42-7 1.39-.58 4.65.26 6.42 2.26.65-.17 1.33-.26 2-.26z"/><path d="M8 14v.5"/><path d="M16 14v.5"/></svg>
+          </div>
+          <div class="pet-info">
+            <div class="pet-name">Luna</div>
+            <div class="pet-type">Cat · Whiskas</div>
+            <div class="pet-last" id="luna-last">Last fed: 5h ago</div>
+          </div>
+          <button class="feed-btn" id="btn-luna" onclick="dispense('luna','Luna')">Feed</button>
+        </div>
+      </div>
 
-      <!-- Pet list -->
-      <div id="pet-list"></div>
+      <button class="add-btn" onclick="showToast('Pet registration available in full app','info')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Register New Pet
+      </button>
     </div>
 
-    <!-- ══════════════ LOG ══════════════ -->
+    <!-- LOG -->
     <div id="page-log" class="tab-page">
-      <div class="page-header">
-        <div class="page-title">Activity Log</div>
-        <div class="page-sub">Feeding and watering history</div>
-      </div>
-
+      <div class="page-header"><div class="page-title">Activity Log</div><div class="page-sub">Feeding history</div></div>
       <div class="stats-hero">
         <div class="stats-hero-label">Today's Calories</div>
-        <div class="stats-hero-val"><span id="log-kcal">0</span> <span class="stats-hero-unit">kcal</span></div>
-        <div class="stats-hero-sub" id="log-today-sub">0 feedings today</div>
+        <div class="stats-hero-val"><span id="log-kcal">284</span> <span class="stats-hero-unit">kcal</span></div>
+        <div class="stats-hero-sub" id="log-sub">3 feedings today</div>
       </div>
-
       <div class="stats-quad">
-        <div class="stat-block">
-          <div class="stat-block-label">Total Feeds</div>
-          <div class="stat-block-val" id="log-total-feed">0</div>
-        </div>
-        <div class="stat-block">
-          <div class="stat-block-label">Water Events</div>
-          <div class="stat-block-val" id="log-total-water">0</div>
-        </div>
-        <div class="stat-block">
-          <div class="stat-block-label">Today Feeds</div>
-          <div class="stat-block-val" id="log-today-count">0</div>
-        </div>
-        <div class="stat-block">
-          <div class="stat-block-label">Total kcal</div>
-          <div class="stat-block-val" id="log-all-kcal">0</div>
-        </div>
+        <div class="stat-block"><div class="stat-block-label">Total Feeds</div><div class="stat-block-val" id="log-total">47</div></div>
+        <div class="stat-block"><div class="stat-block-label">Water Events</div><div class="stat-block-val">12</div></div>
+        <div class="stat-block"><div class="stat-block-label">Today Feeds</div><div class="stat-block-val" id="log-today">3</div></div>
+        <div class="stat-block"><div class="stat-block-label">Total kcal</div><div class="stat-block-val">2,841</div></div>
       </div>
-
       <div class="filter-row">
-        <button class="filter-pill on" data-filter="all">All</button>
-        <button class="filter-pill" data-filter="food">Food</button>
-        <button class="filter-pill" data-filter="water">Water</button>
+        <button class="filter-pill on">All</button>
+        <button class="filter-pill">Food</button>
+        <button class="filter-pill">Water</button>
       </div>
-
-      <div class="log-section" id="log-list"></div>
+      <div id="log-list"></div>
     </div>
 
-    <!-- ══════════════ SCAN ══════════════ -->
+    <!-- SCAN -->
     <div id="page-scan" class="tab-page">
-      <div class="page-header">
-        <div class="page-title">Pet Scanner</div>
-        <div class="page-sub">AI identification via TensorFlow MobileNet</div>
-      </div>
-
-      <div class="scan-wrap">
-        <div class="scan-frame">
-          <video id="scan-video" playsinline muted autoplay style="display:none;"></video>
-          <img  id="scan-preview" class="scan-preview" alt="" style="display:none;">
-          <canvas id="scan-canvas" style="display:none;"></canvas>
-          <div id="scan-icon-wrap" class="scan-icon-wrap" style="color:var(--b3);"></div>
-          <div class="scan-corner tl"></div>
-          <div class="scan-corner tr"></div>
-          <div class="scan-corner bl"></div>
-          <div class="scan-corner br"></div>
-          <div class="scan-line" id="scan-line" style="display:none;"></div>
+      <div class="page-header"><div class="page-title">Pet Scanner</div><div class="page-sub">AI identification via TensorFlow MobileNet</div></div>
+      <div class="scan-frame">
+        <div class="scan-overlay" id="scan-overlay">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span id="scan-status-text">Camera off</span>
         </div>
-        <div class="scan-status" id="scan-status">Camera off</div>
+        <div class="sc sc-tl"></div><div class="sc sc-tr"></div>
+        <div class="sc sc-bl"></div><div class="sc sc-br"></div>
+        <div class="scan-line-anim" id="scan-line"></div>
       </div>
-
-      <div class="scan-result hidden" id="scan-result-box">
-        <div class="scan-result-label">Detection result</div>
-        <div class="scan-result-val" id="scan-result-val">—</div>
-        <div class="scan-result-match" id="scan-result-match"></div>
+      <div class="scan-status" id="scan-status">Tap Start Camera to begin</div>
+      <div class="scan-result-box" id="scan-result">
+        <div class="scan-result-label">Detection Result</div>
+        <div class="scan-result-val" id="scan-val">—</div>
+        <div class="scan-result-match" id="scan-match"></div>
       </div>
-
-      <div class="cam-controls">
-        <button class="cam-btn primary" id="scan-btn-start" onclick="scanStart()">
-          <span id="scan-start-ico"></span> Start Camera
-        </button>
-        <button class="cam-btn primary hidden" id="scan-btn-scan" onclick="scanNow()">
-          <span id="scan-scan-ico"></span> Scan Now
-        </button>
-        <button class="cam-btn hidden" id="scan-btn-again" onclick="resetScanUI();scanStart();">
-          <span id="scan-again-ico"></span> Scan Again
-        </button>
-        <button class="cam-btn hidden" id="scan-btn-stop" onclick="resetScanUI()">
-          <span id="scan-stop-ico"></span> Stop
-        </button>
+      <div class="cam-btns">
+        <button class="btn-primary" id="scan-btn" onclick="toggleScan()">Start Camera</button>
+        <button class="btn-secondary" onclick="simulateScan()">Simulate Scan</button>
       </div>
-
-      <div class="info-box mt-12">
+      <div class="info-box">
         <div class="info-box-title">How It Works</div>
-        <div class="info-box-body">Point your camera at a pet and press Scan. Analyzes the image and identifies dogs, cats, or fish — then matches to registered profiles automatically.</div>
+        <div class="info-box-body">Point your camera at a pet and press Scan. TensorFlow.js MobileNet analyzes the image and identifies dogs, cats, or fish — then matches to registered profiles automatically.</div>
       </div>
     </div>
 
-    <!-- ══════════════ SCHEDULE ══════════════ -->
+    <!-- SCHEDULE -->
     <div id="page-sched" class="tab-page">
-      <div class="page-header">
-        <div class="page-title">Auto Schedule</div>
-        <div class="page-sub">Automated dispensing times</div>
-      </div>
-
-      <button class="add-btn hidden" id="sched-add-btn" onclick="openAddSched()">
-        <span id="sched-add-ico"></span> Add Schedule
+      <div class="page-header"><div class="page-title">Auto Schedule</div><div class="page-sub">Automated dispensing times</div></div>
+      <button class="add-btn" onclick="document.getElementById('modal-sched').classList.add('open')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Schedule
       </button>
-
-      <div id="sched-list"></div>
+      <div>
+        <div class="sched-card"><div class="sched-time">07:00</div><div class="sched-info"><div class="sched-pet">Mochi (Dog)</div><div class="sched-days">Mon · Tue · Wed · Thu · Fri</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="sched-card"><div class="sched-time">18:30</div><div class="sched-info"><div class="sched-pet">Luna (Cat)</div><div class="sched-days">Every day</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="sched-card"><div class="sched-time">12:00</div><div class="sched-info"><div class="sched-pet">Mochi (Dog)</div><div class="sched-days">Sat · Sun</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      </div>
     </div>
 
-    <!-- ══════════════ CONFIG ══════════════ -->
+    <!-- CONFIG -->
     <div id="page-config" class="tab-page">
-      <div class="page-header">
-        <div class="page-title">Configuration</div>
-        <div class="page-sub">Device and account settings</div>
-      </div>
-
+      <div class="page-header"><div class="page-title">Configuration</div><div class="page-sub">Device and account settings</div></div>
       <div class="settings-block">
         <div class="settings-group-title">Adafruit IO Connection</div>
-        <div class="field">
-          <label class="field-label">Username</label>
-          <input id="cfg-user" type="text" placeholder="your-aio-username" autocomplete="off" spellcheck="false">
-        </div>
-        <div class="field">
-          <label class="field-label">API Key</label>
-          <input id="cfg-key" type="password" placeholder="Your Adafruit IO key" autocomplete="off">
-        </div>
-        <button class="btn-submit" onclick="saveConfig()">Save Settings</button>
-        <button class="btn-cancel mt-8" id="cfg-test-btn" onclick="testConnection()">Test Connection</button>
+        <div class="field"><label class="field-label">Username</label><input type="text" value="smartpaw_user"></div>
+        <div class="field"><label class="field-label">API Key</label><input type="password" value="aio_xxxxxxxxxxxxxxx"></div>
+        <button class="btn-submit" onclick="showToast('Settings saved','success')">Save Settings</button>
+        <button class="btn-cancel" onclick="testConn()">Test Connection</button>
       </div>
-
-      <div class="divider"></div>
-
       <div class="settings-block">
-        <div class="settings-group-title">Notifications</div>
-        <button class="btn-cancel" onclick="enableNotifications()">Enable Push Notifications</button>
+        <div class="settings-group-title">ESP32-CAM Stream</div>
+        <div class="field"><label class="field-label">Stream IP Address</label><input type="text" value="192.168.1.42" id="cfg-ip"></div>
+        <button class="btn-submit" onclick="updateIp()">Update Stream IP</button>
       </div>
-
-      <div class="divider"></div>
-
       <div class="settings-block">
         <div class="settings-group-title">System Information</div>
         <div class="settings-row"><span class="settings-row-l">Version</span><span class="settings-row-r">2.0.0</span></div>
         <div class="settings-row"><span class="settings-row-l">ML Model</span><span class="settings-row-r">MobileNet v2</span></div>
         <div class="settings-row"><span class="settings-row-l">Protocol</span><span class="settings-row-r">Adafruit IO REST</span></div>
-        <div class="settings-row"><span class="settings-row-l">Storage</span><span class="settings-row-r">Local Storage</span></div>
+        <div class="settings-row"><span class="settings-row-l">ESP32 Firmware</span><span class="settings-row-r">v1.2.0</span></div>
         <div class="settings-row"><span class="settings-row-l">PWA</span><span class="settings-row-r">Enabled</span></div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="settings-block">
-        <div class="settings-group-title">Data Management</div>
-        <button class="btn-cancel" style="color:var(--er);border-color:var(--er-br);"
-          onclick="if(confirm('This will erase all pets and logs. Continue?')){localStorage.clear();location.reload();}">
-          Clear All Data
-        </button>
       </div>
     </div>
 
   </main>
 
-  <!-- Tab Bar -->
+  <!-- TABBAR -->
   <nav class="tabbar">
-    <button class="tab-btn active" data-tab="dash" onclick="switchTab('dash')">
+    <button class="tab-btn active" onclick="switchTab('dash',this)">
       <div class="tab-indicator"></div>
-      <span class="tab-icon" id="tb-ico-dash"></span>
-      <span class="tab-label">Home</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span style="font-size:.6rem;">Home</span>
     </button>
-    <button class="tab-btn" data-tab="log" onclick="switchTab('log')">
+    <button class="tab-btn" onclick="switchTab('log',this)">
       <div class="tab-indicator"></div>
-      <span class="tab-icon" id="tb-ico-log"></span>
-      <span class="tab-label">Log</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span style="font-size:.6rem;">Log</span>
     </button>
-    <button class="tab-btn" data-tab="scan" onclick="switchTab('scan')">
+    <button class="tab-btn" onclick="switchTab('scan',this)">
       <div class="tab-indicator"></div>
-      <span class="tab-icon" id="tb-ico-scan"></span>
-      <span class="tab-label">Scan</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span style="font-size:.6rem;">Scan</span>
     </button>
-    <button class="tab-btn" data-tab="sched" onclick="switchTab('sched')">
+    <button class="tab-btn" onclick="switchTab('sched',this)">
       <div class="tab-indicator"></div>
-      <span class="tab-icon" id="tb-ico-sched"></span>
-      <span class="tab-label">Schedule</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span style="font-size:.6rem;">Schedule</span>
     </button>
-    <button class="tab-btn" data-tab="config" onclick="switchTab('config')">
+    <button class="tab-btn" onclick="switchTab('config',this)">
       <div class="tab-indicator"></div>
-      <span class="tab-icon" id="tb-ico-config"></span>
-      <span class="tab-label">Config</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span style="font-size:.6rem;">Config</span>
     </button>
   </nav>
-</div>
 
-
-<!-- ══════════════════════ MODALS ══════════════════════ -->
-
-<!-- Add Pet Modal -->
-<div class="backdrop" id="modal-add">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Register New Pet</div>
-
-    <div class="cam-box" id="reg-cam-box" onclick="if(!regCam.stream&&!regCam.captured)regStartCamera()">
-      <video id="reg-video" playsinline muted autoplay style="display:none;"></video>
-      <img  id="reg-preview" alt="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
-      <canvas id="reg-canvas" style="display:none;"></canvas>
-      <div id="reg-cam-hint" style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-        <div style="color:var(--mu2);" id="reg-cam-icon"></div>
-        <span class="cam-hint">Tap to open camera</span>
-      </div>
-      <div id="reg-overlay" class="cam-overlay hidden"></div>
-    </div>
-
-    <div class="cam-controls">
-      <button class="cam-btn primary" id="reg-btn-start" onclick="regStartCamera()">
-        <span id="reg-ico-cam"></span> Camera
-      </button>
-      <button class="cam-btn primary hidden" id="reg-btn-capture" onclick="regCapture()">
-        <span id="reg-ico-play"></span> Capture
-      </button>
-      <button class="cam-btn hidden" id="reg-btn-retake" onclick="regRetake()">
-        <span id="reg-ico-retake"></span> Retake
-      </button>
-      <label class="cam-btn" style="cursor:pointer;">
-        <span id="reg-ico-upload"></span> Upload
-        <input type="file" accept="image/*" style="display:none;" onchange="regFromFile(this)">
-      </label>
-      <button class="cam-btn hidden" id="reg-btn-stop" onclick="regCam.stop();resetRegButtons();">
-        <span id="reg-ico-stop"></span>
-      </button>
-    </div>
-
-    <div class="detected-badge hidden" id="reg-detected">
-      <span id="reg-det-ico"></span>
-      <span id="reg-detected-text">Detected: Dog</span>
-    </div>
-
-    <div class="field">
-      <label class="field-label">Pet Name</label>
-      <input id="reg-name" type="text" placeholder="e.g. Mochi, Buddy, Nemo" maxlength="32">
-    </div>
-
-    <div class="field">
-      <label class="field-label">Pet Type</label>
-      <input id="reg-type-val" type="hidden" value="">
-      <div class="type-grid">
-        <div class="type-opt" data-type="dog">
-          <div class="type-opt-icon" id="reg-type-dog"></div>
-          <div class="type-opt-label">Dog</div>
-        </div>
-        <div class="type-opt" data-type="cat">
-          <div class="type-opt-icon" id="reg-type-cat"></div>
-          <div class="type-opt-label">Cat</div>
-        </div>
-        <div class="type-opt" data-type="fish">
-          <div class="type-opt-icon" id="reg-type-fish"></div>
-          <div class="type-opt-label">Fish</div>
+  <!-- MODAL -->
+  <div class="backdrop" id="modal-sched">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">New Auto Schedule</div>
+      <div class="field"><label class="field-label">Pet</label><select><option>Mochi (Dog)</option><option>Luna (Cat)</option></select></div>
+      <div class="field"><label class="field-label">Time</label><input type="time" value="08:00"></div>
+      <div class="field">
+        <label class="field-label">Repeat</label>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          <span class="filter-pill on" onclick="this.classList.toggle('on')">Mon</span>
+          <span class="filter-pill on" onclick="this.classList.toggle('on')">Tue</span>
+          <span class="filter-pill on" onclick="this.classList.toggle('on')">Wed</span>
+          <span class="filter-pill" onclick="this.classList.toggle('on')">Thu</span>
+          <span class="filter-pill" onclick="this.classList.toggle('on')">Fri</span>
+          <span class="filter-pill" onclick="this.classList.toggle('on')">Sat</span>
+          <span class="filter-pill" onclick="this.classList.toggle('on')">Sun</span>
         </div>
       </div>
+      <button class="btn-submit" onclick="addSchedule()">Add Schedule</button>
+      <button class="btn-cancel" onclick="document.getElementById('modal-sched').classList.remove('open')">Cancel</button>
     </div>
-
-    <div class="field">
-      <label class="field-label">Food Note <span style="color:var(--mu);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label>
-      <textarea id="reg-food" placeholder="e.g. Grain-free kibble, Royal Canin, flake food" rows="2"></textarea>
-    </div>
-
-    <button class="btn-submit" onclick="submitAddPet()">Register Pet</button>
-    <button class="btn-cancel" onclick="hideModal('modal-add');regCam.stop();">Cancel</button>
   </div>
 </div>
-
-<!-- Confirm Feed Modal -->
-<div class="backdrop" id="modal-confirm">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Confirm Feeding</div>
-
-    <div class="confirm-row">
-      <div class="pet-avatar" id="confirm-avatar" style="width:44px;height:44px;border-radius:10px;font-size:0;flex-shrink:0;border:1.5px solid;"></div>
-      <div>
-        <div class="confirm-name" id="confirm-name"></div>
-        <div class="confirm-sub" id="confirm-sub"></div>
-      </div>
-      <div class="confirm-kcal" id="confirm-kcal"></div>
-    </div>
-
-    <div style="margin-bottom:16px;">
-      <div style="font-family:var(--mono);font-size:.58rem;font-weight:500;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:9px;">Nutrition per serving</div>
-      <div class="nut-grid" id="confirm-nut"></div>
-    </div>
-
-    <div class="confirm-note hidden" id="confirm-food-note-wrap">
-      <span id="confirm-note-ico"></span>
-      <span id="confirm-food-note"></span>
-    </div>
-
-    <button class="btn-submit" onclick="doFeed(confirmPetId)">Dispense Now</button>
-    <button class="btn-cancel" onclick="hideModal('modal-confirm')">Cancel</button>
-  </div>
-</div>
-
-<!-- Add Schedule Modal -->
-<div class="backdrop" id="modal-sched">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">New Auto Schedule</div>
-
-    <div class="field">
-      <label class="field-label">Pet</label>
-      <select id="sched-pet"></select>
-    </div>
-    <div class="field">
-      <label class="field-label">Time</label>
-      <input id="sched-time" type="time" value="08:00">
-    </div>
-    <div class="field">
-      <label class="field-label">Repeat</label>
-      <div class="day-wrap" id="sched-days"></div>
-    </div>
-
-    <button class="btn-submit" onclick="submitAddSched()">Add Schedule</button>
-    <button class="btn-cancel" onclick="hideModal('modal-sched')">Cancel</button>
-  </div>
-</div>
-
-
-<!-- Scripts -->
-<script src="./js/db.js"></script>
-<script src="./js/icons.js"></script>
-<script src="./js/camera.js"></script>
-<script src="./js/app.js"></script>
 
 <script>
-// Inject SVG icons after DOM is ready
-(function injectIcons() {
-  // Tab bar icons
-  document.getElementById('tb-ico-dash').innerHTML  = Icons.home(19);
-  document.getElementById('tb-ico-log').innerHTML   = Icons.barChart(19);
-  document.getElementById('tb-ico-scan').innerHTML  = Icons.scan(19);
-  document.getElementById('tb-ico-sched').innerHTML = Icons.calendar(19);
-  document.getElementById('tb-ico-config').innerHTML= Icons.settings(19);
+let totalFeeds=47, todayFeeds=3, todayKcal=284, foodWeight=142, scanning=false, camConnected=false;
+const pageLabels={dash:'Dashboard',log:'Activity Log',scan:'Pet Scanner',sched:'Schedule',config:'Configuration'};
+const logData=[
+  {type:'food',pet:'Mochi',time:'10:24 AM',amount:'45g',kcal:'142 kcal'},
+  {type:'food',pet:'Luna',time:'08:15 AM',amount:'30g',kcal:'94 kcal'},
+  {type:'water',pet:'Mochi',time:'07:30 AM',amount:'120ml',kcal:'—'},
+  {type:'food',pet:'Mochi',time:'Yesterday 18:30',amount:'45g',kcal:'142 kcal'},
+  {type:'food',pet:'Luna',time:'Yesterday 18:00',amount:'30g',kcal:'94 kcal'},
+  {type:'water',pet:'Luna',time:'Yesterday 12:00',amount:'80ml',kcal:'—'},
+];
 
-  // Summary strip icons
-  document.getElementById('ico-pets').innerHTML   = Icons.shield(14);
-  document.getElementById('ico-feeds').innerHTML  = Icons.utensils(14);
-  document.getElementById('ico-today').innerHTML  = Icons.activity(14);
+function buildLog(){
+  document.getElementById('log-list').innerHTML=logData.map(e=>`
+    <div class="log-item">
+      <div class="log-ico ${e.type}">
+        ${e.type==='food'
+          ?`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="2" stroke-linecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`
+          :`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="2" stroke-linecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`}
+      </div>
+      <div class="log-info"><div class="log-title">${e.pet} — ${e.type==='food'?'Fed':'Watered'}</div><div class="log-meta">${e.time}</div></div>
+      <div style="text-align:right;"><div class="log-amount">${e.amount}</div><div style="font-size:.62rem;color:var(--mu);font-family:'DM Mono',monospace;">${e.kcal}</div></div>
+    </div>`).join('');
+}
 
-  // Add pet button
-  document.getElementById('add-icon').innerHTML   = Icons.plus(15);
+function switchTab(tab,btn){
+  document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  if(btn)btn.classList.add('active');
+  document.getElementById('tb-page').textContent=pageLabels[tab];
+}
 
-  // Install banner
-  document.getElementById('install-ico').innerHTML = Icons.download(20);
-  document.getElementById('install-arr').innerHTML = Icons.chevronRight(16);
+function dispense(id,name){
+  const btn=document.getElementById('btn-'+id);
+  if(btn.disabled)return;
+  btn.disabled=true; btn.textContent='Sending...'; btn.classList.add('dispensing-anim');
+  setTimeout(()=>{
+    btn.textContent='Dispensing'; btn.classList.add('dispensing');
+    showToast('Dispensing food for '+name+'...','info');
+    foodWeight=Math.max(10,foodWeight-30);
+    document.getElementById('food-weight').textContent=foodWeight;
+    document.getElementById('food-bar').style.width=Math.round(foodWeight/200*100)+'%';
+    setTimeout(()=>{
+      btn.textContent='Done!'; btn.classList.remove('dispensing-anim');
+      document.getElementById(id+'-last').textContent='Last fed: just now';
+      totalFeeds++; todayFeeds++; todayKcal+=94;
+      document.getElementById('sum-total').textContent=totalFeeds;
+      document.getElementById('sum-today').textContent=todayFeeds;
+      document.getElementById('log-total').textContent=totalFeeds;
+      document.getElementById('log-today').textContent=todayFeeds;
+      document.getElementById('log-kcal').textContent=todayKcal;
+      document.getElementById('log-sub').textContent=todayFeeds+' feedings today';
+      logData.unshift({type:'food',pet:name,time:'Just now',amount:'30g',kcal:'94 kcal'});
+      buildLog();
+      showToast(name+' fed — 30g dispensed','success');
+      setTimeout(()=>{btn.textContent='Feed';btn.classList.remove('dispensing');btn.disabled=false;},2000);
+    },2000);
+  },800);
+}
 
-  // Sched add
-  document.getElementById('sched-add-ico').innerHTML = Icons.plus(15);
+let camInterval=null;
+function toggleCamStream(){
+  const overlay=document.getElementById('cam-overlay');
+  const badge=document.getElementById('cam-pet-badge');
+  const btn=document.getElementById('cam-connect-btn');
+  camConnected=!camConnected;
+  if(camConnected){
+    overlay.style.display='none';
+    btn.textContent='Disconnect'; btn.style.background='#dc2626';
+    showToast('ESP32-CAM stream connected','success');
+    camInterval=setInterval(()=>{
+      if(!camConnected)return;
+      const show=Math.random()>.5;
+      badge.style.display=show?'block':'none';
+      if(show)badge.textContent=(Math.random()>.5?'Mochi':'Luna')+' detected';
+    },4000);
+  } else {
+    clearInterval(camInterval);
+    overlay.style.display='flex';
+    document.getElementById('cam-overlay-text').textContent='Stream disconnected';
+    btn.textContent='Connect'; btn.style.background='';
+    badge.style.display='none';
+    showToast('Stream disconnected','info');
+  }
+}
 
-  // Scan buttons
-  document.getElementById('scan-icon-wrap').innerHTML   = Icons.scan(36);
-  document.getElementById('scan-start-ico').innerHTML   = Icons.camera(14);
-  document.getElementById('scan-scan-ico').innerHTML    = Icons.scan(14);
-  document.getElementById('scan-again-ico').innerHTML   = Icons.rotateCcw(14);
-  document.getElementById('scan-stop-ico').innerHTML    = Icons.stop(14);
+function updateIp(){
+  const ip=document.getElementById('cfg-ip').value;
+  document.getElementById('cam-ip').textContent='http://'+ip+'/stream';
+  showToast('Stream IP updated to '+ip,'success');
+}
 
-  // Reg modal icons
-  document.getElementById('reg-cam-icon').innerHTML  = Icons.camera(30);
-  document.getElementById('reg-ico-cam').innerHTML   = Icons.camera(14);
-  document.getElementById('reg-ico-play').innerHTML  = Icons.play(13);
-  document.getElementById('reg-ico-retake').innerHTML= Icons.rotateCcw(13);
-  document.getElementById('reg-ico-upload').innerHTML= Icons.upload(13);
-  document.getElementById('reg-ico-stop').innerHTML  = Icons.stop(13);
-  document.getElementById('reg-det-ico').innerHTML   = Icons.check(14);
+function toggleScan(){
+  const btn=document.getElementById('scan-btn');
+  scanning=!scanning;
+  document.getElementById('scan-line').style.display=scanning?'block':'none';
+  document.getElementById('scan-status-text').textContent=scanning?'Camera active':'Camera off';
+  document.getElementById('scan-status').textContent=scanning?'Camera active — press Simulate Scan':'Tap Start Camera to begin';
+  btn.textContent=scanning?'Stop Camera':'Start Camera';
+  if(!scanning)document.getElementById('scan-result').style.display='none';
+}
 
-  // Type icons
-  document.getElementById('reg-type-dog').innerHTML  = Icons.dog(24);
-  document.getElementById('reg-type-cat').innerHTML  = Icons.cat(24);
-  document.getElementById('reg-type-fish').innerHTML = Icons.fish(24);
+function simulateScan(){
+  const pets=[
+    {label:'Dog (Shih Tzu)',match:'Matched: Mochi',conf:'94.2%'},
+    {label:'Cat (Domestic)',match:'Matched: Luna',conf:'89.7%'},
+    {label:'Dog (Mixed)',match:'Matched: Mochi',conf:'78.1%'},
+  ];
+  const p=pets[Math.floor(Math.random()*pets.length)];
+  document.getElementById('scan-val').textContent=p.label+' · '+p.conf;
+  document.getElementById('scan-match').textContent=p.match;
+  document.getElementById('scan-result').style.display='block';
+  document.getElementById('scan-status').textContent='Scan complete';
+  showToast('Pet identified: '+p.label,'success');
+}
 
-  // Confirm note
-  document.getElementById('confirm-note-ico').innerHTML = Icons.info(13);
-})();
+function simulateSensors(){
+  setInterval(()=>{
+    const detected=Math.random()>.65;
+    const el=document.getElementById('pet-detected-val');
+    const dist=document.getElementById('sensor-dist');
+    if(detected){
+      const name=Math.random()>.5?'Mochi':'Luna';
+      el.textContent=name; el.style.color='var(--gr)';
+      dist.textContent='dist: '+Math.floor(Math.random()*15+5)+'cm';
+    } else {
+      el.textContent='None'; el.style.color='var(--mu)';
+      dist.textContent='dist: --';
+    }
+  },3500);
+}
+
+function showToast(msg,type='info'){
+  const wrap=document.getElementById('toast-wrap');
+  const t=document.createElement('div');
+  t.className='toast'+(type==='success'?' success':type==='error'?' error':'');
+  const icon=type==='success'
+    ?`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`
+    :`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+  t.innerHTML=icon+' '+msg;
+  wrap.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+
+function testConn(){
+  showToast('Connecting to Adafruit IO...','info');
+  setTimeout(()=>showToast('Connected to Adafruit IO','success'),1500);
+}
+
+function addSchedule(){
+  document.getElementById('modal-sched').classList.remove('open');
+  showToast('Schedule added','success');
+}
+
+document.querySelectorAll('.filter-row').forEach(row=>{
+  row.querySelectorAll('.filter-pill').forEach(p=>{
+    p.addEventListener('click',function(){
+      row.querySelectorAll('.filter-pill').forEach(x=>x.classList.remove('on'));
+      this.classList.add('on');
+    });
+  });
+});
+
+const h=new Date().getHours();
+document.getElementById('greeting-text').textContent=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
+buildLog();
+simulateSensors();
 </script>
-
 </body>
 </html>
